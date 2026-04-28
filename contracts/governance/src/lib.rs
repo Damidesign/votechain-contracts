@@ -20,9 +20,6 @@ use storage::{
 };
 use types::{ContractError, DataKey, Proposal, ProposalState, Vote, VoteRecord};
 
-const MAX_TITLE_LEN: u32 = 256;
-const MAX_DESC_LEN: u32 = 4096;
-
 const MAX_TITLE_LEN: u32 = 128;
 const MAX_DESC_LEN: u32 = 1024;
 const MIN_DURATION: u64 = 60;        // 1 minute
@@ -168,7 +165,8 @@ impl GovernanceContract {
     /// # Errors
     /// - [`ContractError::ProposalNotFound`] if `proposal_id` does not exist.
     /// - [`ContractError::ProposalNotActive`] if the proposal is not in `Active` status.
-    /// - [`ContractError::VotingPeriodEnded`] if the voting window has closed.
+    /// - [`ContractError::VotingNotStarted`] if the current ledger timestamp is before `start_time`.
+    /// - [`ContractError::VotingPeriodEnded`] if the current ledger timestamp is after `end_time`.
     /// - [`ContractError::AlreadyVoted`] if the voter has already voted on this proposal.
     /// - [`ContractError::NoVotingPower`] if the voter's token balance is zero.
     /// - [`ContractError::VoteTallyOverflow`] if adding the vote weight would overflow `i128`.
@@ -186,6 +184,9 @@ impl GovernanceContract {
         }
 
         let now = env.ledger().timestamp();
+        if now < proposal.start_time {
+            return Err(ContractError::VotingNotStarted);
+        }
         if now > proposal.end_time {
             return Err(ContractError::VotingPeriodEnded);
         }
@@ -340,6 +341,34 @@ impl GovernanceContract {
         proposal.quorum = new_quorum;
         save_proposal(&env, &proposal);
         events::quorum_updated(&env, proposal_id, new_quorum);
+        Ok(())
+    }
+
+    /// Transfers admin rights to a new address. Only the current admin may call this.
+    ///
+    /// The old admin loses all privileges immediately upon successful transfer.
+    ///
+    /// # Errors
+    /// - [`ContractError::NotAdmin`] if `admin` does not match the stored admin.
+    /// - [`ContractError::InvalidNewAdmin`] if `new_admin` is the zero address.
+    pub fn transfer_admin(
+        env: Env,
+        admin: Address,
+        new_admin: Address,
+    ) -> Result<(), ContractError> {
+        admin.require_auth();
+        if get_admin(&env)? != admin {
+            return Err(ContractError::NotAdmin);
+        }
+        let zero = Address::from_str(
+            &env,
+            "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+        );
+        if new_admin == zero {
+            return Err(ContractError::InvalidNewAdmin);
+        }
+        set_admin(&env, &new_admin);
+        events::admin_transferred(&env, &admin, &new_admin);
         Ok(())
     }
 

@@ -15,6 +15,8 @@ pub enum ContractError {
     InsufficientBalance = 4,
     /// 5 – Spender allowance is insufficient
     AllowanceExceeded = 5,
+    /// 6 – New admin address is invalid (zero address)
+    InvalidNewAdmin = 6,
 }
 
 /// Storage key enum for the token contract.

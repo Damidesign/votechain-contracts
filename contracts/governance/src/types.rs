@@ -41,6 +41,10 @@ pub enum ContractError {
     TitleTooLong = 17,
     /// 18 – Proposal description exceeds maximum byte length
     DescriptionTooLong = 18,
+    /// 19 – New admin address is invalid (zero address)
+    InvalidNewAdmin = 19,
+    /// 20 – Voting window has not yet opened
+    VotingNotStarted = 20,
 }
 
 #[contracttype]

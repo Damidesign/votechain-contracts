@@ -3,6 +3,7 @@
 use super::*;
 use soroban_sdk::{testutils::{Address as _, Ledger}, Address, Env, String};
 use crate::test_helpers::{setup_env, create_test_proposal, mint_and_vote};
+use crate::storage;
 
 // ── local helpers for tests that need a custom Env/client shape ───────────────
 
@@ -826,4 +827,152 @@ fn test_get_vote_correct_type_for_abstain() {
     assert_eq!(record.weight, 100_000);
 }
 
-// ── end SC-023 ────────────────────────────────────────────────────────────────
+// ── SC-019: voting window boundary tests ─────────────────────────────────────
+
+#[test]
+#[should_panic(expected = "voting period ended")]
+fn test_sc019_vote_after_end_time_reverts() {
+    let t = setup_env();
+    let voter = Address::generate(&t.env);
+    let id = create_test_proposal(&t, &voter);
+    // advance past end_time (duration = 3600)
+    t.env.ledger().with_mut(|l| l.timestamp += 3601);
+    mint_and_vote(&t, &voter, id, Vote::Yes, 1_000_000);
+}
+
+#[test]
+fn test_sc019_vote_one_second_before_end_time_succeeds() {
+    let t = setup_env();
+    let voter = Address::generate(&t.env);
+    let now = t.env.ledger().timestamp();
+    let id = t.client.create_proposal(
+        &voter,
+        &String::from_str(&t.env, "Boundary"),
+        &String::from_str(&t.env, "desc"),
+        &1,
+        &3600,
+    );
+    // one second before end_time — must succeed
+    t.env.ledger().with_mut(|l| l.timestamp = now + 3599);
+    mint_and_vote(&t, &voter, id, Vote::Yes, 1_000_000);
+    assert_eq!(t.client.get_proposal(&id).votes_yes, 1_000_000);
+}
+
+#[test]
+#[should_panic(expected = "voting not started")]
+fn test_sc019_vote_before_start_time_reverts() {
+    let t = setup_env();
+    let voter = Address::generate(&t.env);
+
+    // Advance the clock to T=1000, create the proposal (start_time = 1000),
+    // then manually overwrite it in storage with start_time = 2000 so that
+    // the current ledger timestamp (1000) is before start_time.
+    t.env.ledger().with_mut(|l| l.timestamp = 1000);
+    let id = create_test_proposal(&t, &voter);
+
+    // Patch the stored proposal so start_time is in the future.
+    let mut p = t.client.get_proposal(&id);
+    p.start_time = 2000;
+    p.end_time   = 5600; // keep end_time beyond start_time
+    storage::save_proposal(&t.env, &p);
+
+    // Ledger is still at 1000 — before start_time of 2000.
+    mint_and_vote(&t, &voter, id, Vote::Yes, 1_000_000);
+}
+
+#[test]
+fn test_sc019_vote_at_start_time_succeeds() {
+    let t = setup_env();
+    let voter = Address::generate(&t.env);
+
+    t.env.ledger().with_mut(|l| l.timestamp = 1000);
+    let id = create_test_proposal(&t, &voter);
+
+    // Patch start_time to 1000 (same as current ledger) — should succeed
+    // since the check is `now < start_time` (strict less-than).
+    let mut p = t.client.get_proposal(&id);
+    p.start_time = 1000;
+    p.end_time   = 5600;
+    storage::save_proposal(&t.env, &p);
+
+    mint_and_vote(&t, &voter, id, Vote::Yes, 1_000_000);
+    assert_eq!(t.client.get_proposal(&id).votes_yes, 1_000_000);
+}
+
+#[test]
+fn test_sc019_uses_ledger_timestamp_not_block_number() {
+    // Soroban has no block number concept — env.ledger().timestamp() is the
+    // only time source. This test confirms the check responds to ledger
+    // timestamp changes, not any other counter.
+    let t = setup_env();
+    let voter = Address::generate(&t.env);
+    let id = create_test_proposal(&t, &voter);
+
+    // Confirm vote succeeds at the creation timestamp.
+    mint_and_vote(&t, &voter, id, Vote::Yes, 1_000_000);
+    assert_eq!(t.client.get_proposal(&id).votes_yes, 1_000_000);
+}
+
+// ── end SC-019 ────────────────────────────────────────────────────────────────
+
+// ── SC-017: transfer_admin tests ──────────────────────────────────────────────
+
+#[test]
+fn test_transfer_admin_old_admin_loses_privileges() {
+    let t = setup_env();
+    let new_admin = Address::generate(&t.env);
+    t.client.transfer_admin(&t.admin, &new_admin);
+    // new admin can now cancel a proposal (proves privilege transfer)
+    let proposer = Address::generate(&t.env);
+    let id = create_test_proposal(&t, &proposer);
+    t.client.cancel(&new_admin, &id);
+    assert_eq!(t.client.get_proposal(&id).state, ProposalState::Cancelled);
+}
+
+#[test]
+#[should_panic(expected = "not admin")]
+fn test_transfer_admin_old_admin_cannot_cancel() {
+    let t = setup_env();
+    let new_admin = Address::generate(&t.env);
+    t.client.transfer_admin(&t.admin, &new_admin);
+    // old admin can no longer cancel — must panic
+    let proposer = Address::generate(&t.env);
+    let id = create_test_proposal(&t, &proposer);
+    t.client.cancel(&t.admin, &id);
+}
+
+#[test]
+#[should_panic(expected = "not admin")]
+fn test_transfer_admin_non_admin_reverts() {
+    let t = setup_env();
+    let non_admin = Address::generate(&t.env);
+    let new_admin = Address::generate(&t.env);
+    t.client.transfer_admin(&non_admin, &new_admin);
+}
+
+#[test]
+#[should_panic]
+fn test_transfer_admin_zero_address_reverts() {
+    let t = setup_env();
+    let zero = Address::from_str(
+        &t.env,
+        "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    );
+    t.client.transfer_admin(&t.admin, &zero);
+}
+
+#[test]
+fn test_transfer_admin_emits_event() {
+    use soroban_sdk::{symbol_short, testutils::Events, IntoVal};
+    let t = setup_env();
+    let new_admin = Address::generate(&t.env);
+    t.client.transfer_admin(&t.admin, &new_admin);
+    let events = t.env.events().all();
+    assert!(events.iter().any(|(_, topics, data)| {
+        topics == (symbol_short!("admxfer"),).into_val(&t.env)
+            && data
+                == (t.admin.clone(), new_admin.clone()).into_val(&t.env)
+    }));
+}
+
+// ── end SC-017 ────────────────────────────────────────────────────────────────

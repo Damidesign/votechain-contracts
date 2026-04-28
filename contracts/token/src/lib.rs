@@ -171,6 +171,39 @@ impl TokenContract {
         Ok(())
     }
 
+    /// Transfers admin rights to a new address. Only the current admin may call this.
+    ///
+    /// The old admin loses all privileges immediately upon successful transfer.
+    ///
+    /// # Parameters
+    /// - `env` – Soroban execution environment.
+    /// - `admin` – Current admin address; must authorise the call.
+    /// - `new_admin` – Address that will become the new admin.
+    ///
+    /// # Errors
+    /// - [`ContractError::NotAdmin`] if `admin` does not match the stored admin.
+    /// - [`ContractError::InvalidNewAdmin`] if `new_admin` is the zero address.
+    pub fn transfer_admin(
+        env: Env,
+        admin: Address,
+        new_admin: Address,
+    ) -> Result<(), ContractError> {
+        admin.require_auth();
+        if get_admin(&env)? != admin {
+            return Err(ContractError::NotAdmin);
+        }
+        let zero = Address::from_str(
+            &env,
+            "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+        );
+        if new_admin == zero {
+            return Err(ContractError::InvalidNewAdmin);
+        }
+        set_admin(&env, &new_admin);
+        events::admin_transferred(&env, &admin, &new_admin);
+        Ok(())
+    }
+
     /// Returns the contract version as a `(major, minor, patch)` semver tuple.
     pub fn get_version(env: Env) -> (u32, u32, u32) {
         get_version(&env)
