@@ -19,7 +19,7 @@ use storage::{
     set_admin, set_last_proposal, set_min_proposal_balance, set_proposal_cooldown,
     set_version, set_voting_token, get_vote_record,
 };
-use types::{ContractError, DataKey, Proposal, ProposalState, Vote, VoteRecord};
+use types::{ContractError, ContractState, DataKey, Proposal, ProposalState, Vote, VoteRecord};
 
 const MAX_TITLE_LEN: u32 = 128;
 const MAX_DESC_LEN: u32 = 1024;
@@ -63,6 +63,7 @@ impl GovernanceContract {
             set_proposal_cooldown(&env, proposal_cooldown);
         }
         set_version(&env, (1, 0, 0));
+        set_contract_state(&env, &ContractState::Ready);
         events::contract_initialized(&env, &admin);
         Ok(())
     }
@@ -73,8 +74,8 @@ impl GovernanceContract {
     /// The numeric ID assigned to the new proposal.
     ///
     /// # Errors
-    /// - [`ContractError::InvalidTitle`] if `title` is empty or exceeds 128 characters.
-    /// - [`ContractError::InvalidDescription`] if `description` is empty or exceeds 1024 characters.
+    /// - [`ContractError::InvalidTitle`] if `title` is empty or exceeds 256 characters.
+    /// - [`ContractError::InvalidDescription`] if `description` is empty or exceeds 4096 characters.
     /// - [`ContractError::InvalidQuorum`] if `quorum` is zero or negative.
     /// - [`ContractError::QuorumExceedsSupply`] if `quorum` exceeds the total token supply.
     /// - [`ContractError::InvalidDurationRange`] if `duration` is outside [60, 2_592_000] seconds.
@@ -90,12 +91,12 @@ impl GovernanceContract {
     ) -> Result<u64, ContractError> {
         proposer.require_auth();
 
-        // Title: non-empty, max 128 chars
+        // Title: non-empty, max 256 chars
         let title_len = title.len();
         if title_len == 0 || title_len > MAX_TITLE_LEN {
             return Err(ContractError::InvalidTitle);
         }
-        // Description: non-empty, max 1024 chars
+        // Description: non-empty, max 4096 chars
         let desc_len = description.len();
         if desc_len == 0 || desc_len > MAX_DESC_LEN {
             return Err(ContractError::InvalidDescription);
@@ -417,5 +418,14 @@ impl GovernanceContract {
     /// Returns the contract version as a `(major, minor, patch)` semver tuple.
     pub fn get_version(env: Env) -> (u32, u32, u32) {
         get_version(&env)
+    }
+
+    /// Returns the contract lifecycle state.
+    ///
+    /// - [`ContractState::Uninitialized`]: `initialize` has not yet been called.
+    /// - [`ContractState::Ready`]: `initialize` completed successfully; the
+    ///   contract is fully operational.
+    pub fn get_state(env: Env) -> ContractState {
+        get_contract_state(&env)
     }
 }

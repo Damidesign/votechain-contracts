@@ -51,6 +51,19 @@ pub enum ContractError {
     QuorumExceedsSupply = 22,
 }
 
+/// Lifecycle state of the governance contract itself.
+///
+/// - `Uninitialized`: the contract has been deployed but `initialize` has not
+///   yet been called. No governance operations are possible.
+/// - `Ready`: `initialize` completed successfully. The contract is fully
+///   operational.
+#[contracttype]
+#[derive(Clone, Debug, PartialEq)]
+pub enum ContractState {
+    Uninitialized,
+    Ready,
+}
+
 #[contracttype]
 #[derive(Clone, Debug, PartialEq)]
 pub enum ProposalState {
