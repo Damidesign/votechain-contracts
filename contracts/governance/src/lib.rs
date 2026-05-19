@@ -27,13 +27,13 @@ mod prop_tests;
 
 use soroban_sdk::{contract, contractclient, contractimpl, token, Address, Env, String};
 use storage::{
-    get_admin, get_contract_state, get_last_proposal, get_min_proposal_balance,
+    get_admin, get_contract_state, get_last_proposal, get_min_duration, get_min_proposal_balance,
     get_proposal_cooldown, get_restrict_admin_vote, get_timelock_duration, get_version,
     get_voter_snapshot, get_voting_token, has_voted, is_initialized, is_paused, load_proposal,
     mark_voted, next_id, save_proposal, save_vote_record, save_voter_snapshot, set_admin,
-    set_contract_state, set_last_proposal, set_min_proposal_balance, set_paused,
-    set_proposal_cooldown, set_restrict_admin_vote, set_timelock_duration, set_version,
-    set_voting_token, get_vote_record,
+    set_contract_state, set_last_proposal, set_min_duration, set_max_duration,
+    set_min_proposal_balance, set_paused, set_proposal_cooldown, set_restrict_admin_vote,
+    set_timelock_duration, set_version, set_voting_token, get_vote_record, get_max_duration,
 };
 use types::{ContractError, ContractState, DataKey, Proposal, ProposalState, Vote, VoteRecord};
 
@@ -166,8 +166,10 @@ impl GovernanceContract {
         if duration == 0 {
             return Err(ContractError::InvalidDuration);
         }
-        // Duration: within [MIN_DURATION, MAX_DURATION]
-        if duration < MIN_DURATION || duration > MAX_DURATION {
+        // Duration: within [min_duration, max_duration] as configured at init.
+        let min_dur = get_min_duration(&env);
+        let max_dur = get_max_duration(&env);
+        if duration < min_dur || duration > max_dur {
             return Err(ContractError::InvalidDurationRange);
         }
 

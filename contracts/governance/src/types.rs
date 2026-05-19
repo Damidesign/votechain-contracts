@@ -77,6 +77,8 @@ pub enum ContractError {
     InvalidAddress = 28,
     /// 29 – Proposal ID counter overflowed (u64::MAX reached)
     ProposalCountOverflow = 29,
+    /// 30 – Timelock period has not yet expired
+    TimelockNotExpired = 30,
 }
 
 /// Lifecycle state of the governance contract itself.
@@ -230,6 +232,14 @@ pub enum DataKey {
     /// Mandatory delay (seconds) between a proposal passing and it becoming executable (instance storage).
     /// Key space: singleton — only one `TimelockDuration` entry exists.
     TimelockDuration,
+
+    /// Minimum allowed voting duration in seconds (instance storage).
+    /// Key space: singleton — only one `MinDuration` entry exists.
+    MinDuration,
+
+    /// Maximum allowed voting duration in seconds (instance storage).
+    /// Key space: singleton — only one `MaxDuration` entry exists.
+    MaxDuration,
 }
 
 #[contracttype]
