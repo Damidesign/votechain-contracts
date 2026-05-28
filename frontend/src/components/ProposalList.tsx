@@ -91,6 +91,7 @@ export default function ProposalList({ proposals }: Props) {
           onClick={() => downloadCsv(generateProposalCsv(filtered), 'proposals.csv')}
           disabled={filtered.length === 0}
           aria-disabled={filtered.length === 0}
+          aria-label="Export filtered proposals as CSV"
         >
           Export CSV
         </button>
