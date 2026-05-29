@@ -24,10 +24,14 @@ A responsive navigation bar with a mobile hamburger menu and a network indicator
 A dedicated page showing all proposal metadata and voting information.
 
 - **Metadata Display**: Shows title, description, proposer (truncated), start/end dates, and quorum.
-- **Vote Breakdown**: 
-  - Visual progress bar showing the distribution of Yes, No, and Abstain votes.
+- **Vote Breakdown Chart**: 
+  - Visual distribution of Yes, No, and Abstain votes.
   - Percentage and absolute count for each vote type.
-  - Quorum progress tracking.
+  - **Accessibility**: Includes `sr-only` text summaries and ARIA labels for screen readers.
+- **Quorum Progress Bar**:
+  - Separate progress bar tracking total votes against the quorum requirement.
+  - Visual indicator (green bar + checkmark) when quorum is met.
+  - Calculation of remaining votes needed if quorum is not yet reached.
 - **Contextual Actions**:
   - **Vote**: Available when proposal is Active and not expired.
   - **Finalize**: Available when proposal is Active but expired.

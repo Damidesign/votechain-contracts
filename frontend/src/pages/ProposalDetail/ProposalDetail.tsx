@@ -79,30 +79,57 @@ const ProposalDetail: React.FC<ProposalDetailProps> = ({
 
       <div className="proposal-section">
         <h3>Vote Breakdown</h3>
-        <div className="vote-stats">
-          <div className="stat-bar-container">
-            <div className="stat-bar">
-              <div className="bar yes" style={{ width: `${percentages.yes}%` }}></div>
-              <div className="bar no" style={{ width: `${percentages.no}%` }}></div>
-              <div className="bar abstain" style={{ width: `${percentages.abstain}%` }}></div>
+        <div className="vote-stats" role="region" aria-label="Vote Statistics">
+          {/* Vote Chart */}
+          <div className="chart-container">
+            <div className="stat-bar-container" aria-hidden="true">
+              <div className="stat-bar">
+                <div className="bar yes" style={{ width: `${percentages.yes}%` }}></div>
+                <div className="bar no" style={{ width: `${percentages.no}%` }}></div>
+                <div className="bar abstain" style={{ width: `${percentages.abstain}%` }}></div>
+              </div>
+            </div>
+            <div className="sr-only">
+              Vote distribution: Yes {percentages.yes}%, No {percentages.no}%, Abstain {percentages.abstain}%
+            </div>
+            <div className="stat-labels">
+              <div className="label-item">
+                <span className="dot yes"></span>
+                <span className="label-text">Yes: {proposal.votesYes.toString()} ({percentages.yes}%)</span>
+              </div>
+              <div className="label-item">
+                <span className="dot no"></span>
+                <span className="label-text">No: {proposal.votesNo.toString()} ({percentages.no}%)</span>
+              </div>
+              <div className="label-item">
+                <span className="dot abstain"></span>
+                <span className="label-text">Abstain: {proposal.votesAbstain.toString()} ({percentages.abstain}%)</span>
+              </div>
             </div>
           </div>
-          <div className="stat-labels">
-            <div className="label-item">
-              <span className="dot yes"></span>
-              <span className="label-text">Yes: {proposal.votesYes.toString()} ({percentages.yes}%)</span>
+
+          {/* Quorum Progress */}
+          <div className="quorum-container">
+            <div className="quorum-header">
+              <span className="quorum-label">Quorum Progress</span>
+              <span className="quorum-value">
+                {totalVotes.toString()} / {proposal.quorum.toString()} votes
+              </span>
             </div>
-            <div className="label-item">
-              <span className="dot no"></span>
-              <span className="label-text">No: {proposal.votesNo.toString()} ({percentages.no}%)</span>
+            <div className="progress-bar-container" role="progressbar" 
+                 aria-valuenow={Number(totalVotes)} 
+                 aria-valuemin={0} 
+                 aria-valuemax={Number(proposal.quorum)}>
+              <div 
+                className={`progress-bar ${totalVotes >= proposal.quorum ? 'quorum-met' : ''}`}
+                style={{ width: `${Math.min(100, Number((totalVotes * BigInt(100)) / (proposal.quorum || BigInt(1))))}%` }}
+              ></div>
             </div>
-            <div className="label-item">
-              <span className="dot abstain"></span>
-              <span className="label-text">Abstain: {proposal.votesAbstain.toString()} ({percentages.abstain}%)</span>
+            <div className="quorum-status">
+              {totalVotes >= proposal.quorum 
+                ? '✅ Quorum Met' 
+                : `${(proposal.quorum - totalVotes).toString()} more votes needed`}
             </div>
-          </div>
-          <div className="total-votes">
-            Total Votes: {totalVotes.toString()} / {proposal.quorum.toString()} (Quorum)
           </div>
         </div>
       </div>

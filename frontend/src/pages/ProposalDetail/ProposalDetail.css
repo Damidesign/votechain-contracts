@@ -104,7 +104,13 @@
 .vote-stats {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 32px;
+}
+
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .stat-bar-container {
@@ -153,11 +159,67 @@
   color: #374151;
 }
 
-.total-votes {
-  text-align: center;
+/* Quorum Progress */
+.quorum-container {
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.quorum-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.quorum-label {
   font-size: 0.875rem;
-  color: #6b7280;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.quorum-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.progress-bar-container {
+  height: 10px;
+  background: #e2e8f0;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: #3b82f6;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.progress-bar.quorum-met {
+  background: #10b981;
+}
+
+.quorum-status {
+  font-size: 0.75rem;
   font-weight: 500;
+  color: #64748b;
+}
+
+/* Accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 /* Actions */
