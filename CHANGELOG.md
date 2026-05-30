@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Governance Dashboard**: Real-time metrics dashboard with total proposals, participation rates, pass/reject ratios, and anonymized top voters (#322)
+
 ## [0.1.0] - 2026-04-27
 
 ### Added
