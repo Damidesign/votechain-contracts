@@ -64,6 +64,8 @@ async function connectWallet() {
     await freighter.requestAccess();
     userAddress = await freighter.getPublicKey();
     updateWalletUI();
+    // Track wallet connection (PROD-003)
+    if (window.plausible) window.plausible('ConnectWallet');
   } catch (e) {
     console.error('Wallet connection failed:', e);
     alert('Failed to connect wallet.');
@@ -459,6 +461,11 @@ async function submitMockTransaction(actionLabel) {
       error: null,
     });
 
+    // Track submission (PROD-003)
+    if (window.plausible) {
+      window.plausible('SubmitAction', { props: { action: actionLabel } });
+    }
+
     setTimeout(() => {
       const failed = Math.random() < 0.2;
       showToast({
@@ -468,6 +475,11 @@ async function submitMockTransaction(actionLabel) {
         actionLabel,
         error: failed ? `${actionLabel} failed due to a network error.` : null,
       });
+
+      // Track outcome (PROD-003)
+      if (window.plausible && !failed) {
+        window.plausible('ActionConfirmed', { props: { action: actionLabel } });
+      }
     }, 1600);
   } catch (e) {
     console.warn('Transaction cancelled or failed:', e);
@@ -762,6 +774,10 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (titleLink) {
         const card = titleLink.closest('.proposal-card');
         const id = card.querySelector('.proposal-id').textContent.replace('#', '');
+        // Track proposal view (PROD-003)
+        if (window.plausible) {
+          window.plausible('ViewProposal', { props: { id } });
+        }
         // Simulation: show a mock detail view or alert for now
         console.log(`Navigating to proposal #${id} details...`);
       }
