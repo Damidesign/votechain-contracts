@@ -106,7 +106,29 @@
   },
   "votingPanel": {
     "heading": "Voting Panel",
-    "placeholder": "Connect your wallet and select a proposal to cast your vote."
+    "placeholder": "Connect your wallet and select a proposal to cast your vote.",
+    "castVote": "Cast Vote",
+    "voteFor": "For",
+    "voteAgainst": "Against",
+    "voteAbstain": "Abstain",
+    "votesCount": "Votes",
+    "totalWeight": "Total weight",
+    "optimisticBadge": "pending confirmation…",
+    "confirming": "Confirming…",
+    "alreadyVoted": "You have already voted on this proposal.",
+    "connectWalletPrompt": "Connect your wallet to vote.",
+    "voteSubmitted": "Vote submitted",
+    "voteConfirmed": "Vote confirmed",
+    "voteFailed": "Vote failed — your vote has been reverted.",
+    "submitAriaLabel": "Submit {{type}} vote for proposal {{id}}",
+    "loadingAriaLabel": "Confirming transaction…",
+    "selectProposal": "Select a proposal",
+    "noActiveProposals": "No active proposals to vote on.",
+    "colChoice": "Choice",
+    "colVotes": "Votes",
+    "colWeight": "Weight",
+    "weightValue": "{{weight}}",
+    "votesValue": "{{count}}"
   },
   "modal": {
     "closeAriaLabel": "Close dialog"
