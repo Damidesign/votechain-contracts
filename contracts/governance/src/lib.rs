@@ -38,7 +38,7 @@ use storage::{
     set_admin_transfer_expiry, get_admin_transfer_expiry,
     set_pause_reason,
 };
-use types::{ContractError, ContractState, DataKey, Proposal, ProposalState, Vote, VoteRecord};
+use types::{ContractError, ContractState, DataKey, GovernanceConfig, Proposal, ProposalState, Vote, VoteRecord};
 
 const MAX_TITLE_LEN: u32 = 128;
 const MAX_DESC_LEN: u32 = 1024;
