@@ -408,3 +408,30 @@ tr:nth-child(even) {
 .modal-body {
   color: #e2e8f0;
 }
+
+/* ── Spinner (used by optimistic vote loading state) ────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+}
+
+/* ── Vote choice badges ─────────────────────────────────────── */
+.vote-for     { background: #14532d; color: #bbf7d0; }
+.vote-against { background: #7f1d1d; color: #fecaca; }
+.vote-abstain { background: #334155; color: #e2e8f0; }
+
+/* ── Optimistic pending row highlight ───────────────────────── */
+.optimistic-pending {
+  opacity: 0.75;
+  font-style: italic;
+}

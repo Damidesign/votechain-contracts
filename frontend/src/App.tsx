@@ -1,12 +1,13 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import Navbar from "./components/Navbar";
 import { ProposalSkeletonList } from "./components/ProposalCardSkeleton";
 
-// Placeholder page components — replace with real implementations
 const ProposalList = React.lazy(() => import("./pages/ProposalList"));
 const ProposalDetail = React.lazy(() => import("./pages/ProposalDetail"));
 const VotingPanel = React.lazy(() => import("./pages/VotingPanel"));
+const VoteHistoryPage = React.lazy(() => import("./pages/VoteHistoryPage"));
 
 /**
  * Generic page-level fallback for lazy chunks that don't have a
@@ -21,11 +22,13 @@ function PageFallback() {
 }
 
 export default function App() {
+  const { t } = useTranslation();
+
   return (
     <ErrorBoundary section="App">
       {/* Skip navigation link — allows keyboard users to bypass repeated nav (WCAG 2.4.1) */}
       <a href="#main-content" className="skip-link">
-        Skip to main content
+        {t("nav.skipToMain")}
       </a>
 
       <Navbar />
