@@ -36,6 +36,7 @@ use storage::{
     set_timelock_duration, set_version, set_voting_token, get_vote_record, get_max_duration,
     set_pending_admin, get_pending_admin, clear_pending_admin,
     set_admin_transfer_expiry, get_admin_transfer_expiry,
+    set_pause_reason,
 };
 use types::{ContractError, ContractState, DataKey, GovernanceConfig, Proposal, ProposalState, Vote, VoteRecord};
 
@@ -595,14 +596,15 @@ impl GovernanceContract {
     /// # Errors
     /// - [`ContractError::InvalidAddress`] if `admin` is the zero address.
     /// - [`ContractError::NotAdmin`] if `admin` does not match the stored admin.
-    pub fn pause(env: Env, admin: Address) -> Result<(), ContractError> {
+    pub fn pause(env: Env, admin: Address, reason: Option<String>) -> Result<(), ContractError> {
         admin.require_auth();
         require_non_zero_address(&env, &admin)?;
         if get_admin(&env)? != admin {
             return Err(ContractError::NotAdmin);
         }
         set_paused(&env, true);
-        events::contract_paused(&env, &admin);
+        set_pause_reason(&env, reason.clone());
+        events::contract_paused(&env, &admin, reason);
         Ok(())
     }
 
@@ -624,6 +626,7 @@ impl GovernanceContract {
             return Err(ContractError::NotPaused);
         }
         set_paused(&env, false);
+        set_pause_reason(&env, None);
         events::contract_unpaused(&env, &admin);
         Ok(())
     }
@@ -633,30 +636,10 @@ impl GovernanceContract {
         is_paused(&env)
     }
 
-    /// Returns the current admin address. No auth required.
-    ///
-    /// # Errors
-    /// - [`ContractError::AdminNotSet`] if the contract has not been initialised.
-    pub fn get_admin(env: Env) -> Result<Address, ContractError> {
-        get_admin(&env)
-    }
-
-    /// Returns the full contract configuration. No auth required.
-    ///
-    /// # Errors
-    /// - [`ContractError::VotingTokenNotSet`] if the contract has not been initialised.
-    pub fn get_config(env: Env) -> Result<GovernanceConfig, ContractError> {
-        Ok(GovernanceConfig {
-            voting_token: get_voting_token(&env)?,
-            min_proposal_balance: get_min_proposal_balance(&env),
-            proposal_cooldown: get_proposal_cooldown(&env),
-            min_duration: get_min_duration(&env),
-            max_duration: get_max_duration(&env),
-            restrict_admin_vote: get_restrict_admin_vote(&env),
-            timelock_duration: get_timelock_duration(&env),
-            paused: is_paused(&env),
-            version: get_version(&env),
-        })
+    /// Returns the optional pause reason string stored on-chain.
+    pub fn get_pause_reason(env: Env) -> Option<String> {
+        // Call the storage accessor directly to avoid name collision.
+        storage::get_pause_reason(&env)
     }
 
     /// Returns the full state of a proposal.
