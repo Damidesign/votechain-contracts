@@ -56,12 +56,8 @@ router.get(
 
     res.json(stats);
   } catch (error) {
-    if (error instanceof CircuitOpenError) {
-      res.status(503).json({ error: error.message, retryAfterMs: error.retryAfterMs });
-    } else {
-      console.error("Error fetching governance stats:", error);
-      res.status(500).json({ error: "Failed to fetch governance statistics" });
-    }
+    console.error("Error fetching governance stats:", error);
+    res.status(500).json(withCorrelationId(res, { error: "Failed to fetch governance statistics" }));
   }
 });
 
